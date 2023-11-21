@@ -136,7 +136,7 @@ void MakeModel(int nEntries)
     // larger widght means greater bin migration
     // I used a smaller width so that the system will be well-behaved
     double smearing_mean = 0;
-    double smearing_std = 1;
+    double smearing_std = 2;
 
     TRandom3 rand;
     for(int iEntry=0;iEntry<nEntries;iEntry++){
@@ -166,9 +166,11 @@ void DefineHistograms()
 
     int nBinsTrue = 20;
     int nBinsReco = 40;
-    _hTrue = new TH1D("true","",nBinsTrue,60,120);
-    _hReco = new TH1D("reco","",nBinsReco,60,120);
-    _hMatrix = new TH2D("migration_matrix","",nBinsReco,60,120,nBinsTrue,60,120);
+    int lowMass = 60;
+    int highMass = 120;
+    _hTrue = new TH1D("true","",nBinsTrue,lowMass,highMass);
+    _hReco = new TH1D("reco","",nBinsReco,lowMass,highMass);
+    _hMatrix = new TH2D("migration_matrix","",nBinsReco,lowMass,highMass,nBinsTrue,lowMass,highMass);
 
     _hTrue->SetMinimum(0);
     _hTrue->SetLineColor(kRed);

@@ -9,12 +9,24 @@ TH1F*_hUnfolded;
 void LoadHistograms();
 void TUnfoldUnfolding();
 void PlotUnfoldedResult();
+void SaveToFile();
 
 void robert_unfold()
 {
+    // in this script, we are unfolding the reconstructed distribution
+    // it contains the exact same masses as the migration matrix
+    // Our true distribution is made from the same masses as our matrix is well
+    // this means that when we unfold reco, we should get an unfolded result
+    // which is identical to the true distribution
+    // this is called a closure test
+    // It's a good check to see that the unfolding is set up correctly
+    // in reality, the simulation only resembles real data
+    // the matrix is made from simulation
+    // so the data unfolded won't match the true distribution exactly
     LoadHistograms();
     TUnfoldUnfolding();
     PlotUnfoldedResult();
+    SaveToFile();
 }// end robert_unfold()
 
 void LoadHistograms()
@@ -109,15 +121,15 @@ void TUnfoldUnfolding()
     //Create unfolded histogram
     TH1*hUnfolded = unfold.GetOutput("hUnfolded");
 
-    //Create error matrices
-    TH2*_hEmatStat=unfold.GetEmatrixInput("hEmatrixInput");
+    // Create covariance matrix
+    // the diagonals contain the square of the error for each bin
     TH2*_hEmatTotal=unfold.GetEmatrixTotal("hEmatrixTotal");
 
     //Create unfolding histogram with errors
     TH1F*hUnfoldedE = (TH1F*)hUnfolded->Clone("hUnfoldedTUnfold");
 
     //loop over unfolded histogram bins and assign errors to each one
-    // these come from the error matrix defined by TUnfold
+    // these come from the covariance matrix defined by TUnfold
     int nBinsTrue = _hTrue->GetNbinsX();
     for(int i=0;i<=nBinsTrue;i++){
         double binError = TMath::Sqrt(_hEmatTotal->GetBinContent(i+1,i+1));
@@ -129,6 +141,8 @@ void TUnfoldUnfolding()
 
 void PlotUnfoldedResult()
 {
+    // plotting true, reco, and unfolded results
+    // adding ratio of reco/true and unfolded/true at the bottom
     int nBinsX = _hTrue->GetNbinsX();
     double x1 = _hTrue->GetBinLowEdge(1);
     double x2 = _hTrue->GetBinLowEdge(nBinsX);
@@ -215,4 +229,14 @@ void PlotUnfoldedResult()
     line->Draw("same");
 
     c1->SaveAs("plots/unfolded_closure.png");
+}
+
+void SaveToFile()
+{
+    TFile*saveFile = new TFile("unfolded_output.root","recreate");
+    _hTrue->Write();
+    _hReco->Write();
+    _hUnfolded->Write();
+    _hMatrix->Write();
+    saveFile->Close();
 }

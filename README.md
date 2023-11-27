@@ -164,9 +164,9 @@ number of events in row 20: 1
 In this case, the response matrix appears to be normalized correctly and the matrix projections match the true and reco distributions. Due to the scale of these plots in the actual analysis, it can be difficult to see if two plots match exactly, and you'll want to usually include a ratio plot to confirm. But in this case, I'm going to skip it.
 
 # How to carry out unfolding on a simple model
-Import the histograms created from the toy models, set all necessary options, and then tell TUnfold which distribution is to be unfolded, which matrix is your migration matrix, and any backgrounds being used. In this case we are not adding backgrounds, so they are not present. I wrote detailed comments in the script robert_unfold.C, so go there and read through it to unerstand the details.
+Import the histograms created from the toy models, set all necessary options, and then tell TUnfold which distribution is to be unfolded, which matrix is your migration matrix, and any backgrounds being used. In this case we are not adding backgrounds, so they are not present. I wrote detailed comments in the script robert_unfold.C, so go there and read through it.
 
 Here is the unfolding closure test carried out on the toy model shown here:
 ![image](plots/unfolded_closure.png "unfolding closure test with ratio plots underneath")
 
-You can see in the ratio plot that the reco distribution varies from the true one by up to around 4%, but the unfolded distribution appears to exactly match the true distribution as expected.
+You can see in the ratio plot that the reco distribution varies from the true one by up to around 4%, but the unfolded distribution appears to exactly match the true distribution as expected. Note that I rebinned the reco distribution in this plot so that we can see a direct comparison between it and the true distribution.

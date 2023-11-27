@@ -127,3 +127,35 @@ Next, create a function (or use one built-in to ROOT like Gaus()) to randomly se
 Below are my reco and true distributions:
 ![image](plots/reco_robert.png "plot of reco distribution")
 ![image](plots/true_robert.png "plot of true distribution")
+
+The migration matrix needs to be filled event-by-event with the same variables as the true and reco distribution. It should be somewhat diagonal with some spreading along the diagonal. In a more realistic case, there will be effects other than simple smearing, so this will not always be the case. But for now, this is what we should see. Below is the migration matrix and response matrix produced along with the true and reco distributions above:
+
+![image](plots/migrationMatrix_robert.png "2D histogram of the migration matrix")
+![image](plots/responseMatrix_robert.png "2D histogram of the response matrix")
+
+Finally, let's run CheckResullts.sh on the output:
+```
+./CheckResults.sh robert_unfolding.root
+
+number of events in row 1: 1
+number of events in row 2: 1
+number of events in row 3: 1
+number of events in row 4: 1
+number of events in row 5: 1
+number of events in row 6: 1
+number of events in row 7: 1
+number of events in row 8: 1
+number of events in row 9: 1
+number of events in row 10: 1
+number of events in row 11: 1
+number of events in row 12: 1
+number of events in row 13: 1
+number of events in row 14: 1
+number of events in row 15: 1
+number of events in row 16: 1
+number of events in row 17: 1
+number of events in row 18: 1
+number of events in row 19: 1
+number of events in row 20: 1
+```
+![image](plots/test_projections_robert.png "plot of reco and true distributions vs x and y projections of the migration matrix from histograms")

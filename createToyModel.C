@@ -23,7 +23,7 @@ void SavePlots();
 
 void createToyModel()
 {
-    // sets TH1 and TH2 to automaticall save sums of weights of errors in histograms
+    // sets TH1 and TH2 to automatically save sums of weights of errors in histograms
     // needed for making sure uncertainties are right when summing histograms
     TH1::SetDefaultSumw2();
     TH2::SetDefaultSumw2();
@@ -35,9 +35,28 @@ void createToyModel()
     // just a personal preference
     gStyle->SetPalette(1);
 
+    // Create and define histograms to contain all distributions
     DefineHistograms();
+
+    // Create the toy model with 1000000 events
     MakeModel(1e6);
+    
+    // Create the normalized response matrix from the migration matrix
+    // This will scale each bin such that the sum of all events for each reco bin
+    // for a given true bin will be 1.0
+    // We don't use this in TUnfold because TUnfold takes the raw migration matrix
+    // and normalizes it by default
+    // But we do use the response matrix for easy viewing of the bin migration probabilities
+    // It is also needed for calculating the condition number
+    // the condition number tells you how well behaved the system is
+    // if the number is small (~10 or so), unfolding should work well
+    // if it is much larger than that, regularization may be needed
+    // For this test, I will not be using regularization
+    // and I will not check the condition number
+    // but it's worth you knowing about
     MakeNormalizedResponseMatrix();
+
+
     MakePlots();
     SavePlots();
     SaveToFile();
@@ -121,6 +140,17 @@ void MakeNormalizedResponseMatrix()
 
 void MakeModel(int nEntries)
 {
+    // Some explanation:
+    // ********************************************************************
+    // We want to produce the model event-by-event
+    // If you produce the distributions independent of each other
+    // They will not be consistent
+    // Because the migration matrix needs to be filled from the same events
+    // as the true and reco distributions
+    // this is impossible if you create true and reco histograms first 
+    // and then try to create a migration matrix from that
+    // because the histograms lose the event level information
+
     // initialize the true mass, reco mass, and a smearing factor
     double true_mass;
     double reco_mass;
@@ -140,10 +170,13 @@ void MakeModel(int nEntries)
 
     TRandom3 rand;
     for(int iEntry=0;iEntry<nEntries;iEntry++){
+
         // randomly choose true mass with Gaussian
         true_mass = rand.Gaus(true_mean,true_std);        
+
         // randomly choose the smearing factor with Gaussian
         smear = rand.Gaus(smearing_mean,smearing_std);
+
         // the reco mass is the true mass added to the smearing factor
         // which can be positive or negative
         reco_mass = true_mass+smear;
@@ -153,7 +186,7 @@ void MakeModel(int nEntries)
         _hReco->Fill(reco_mass);
         _hMatrix->Fill(reco_mass,true_mass);
     }// end loop over entries
-}// ed MakeModel()
+}// end MakeModel()
 
 void DefineHistograms()
 {
@@ -163,6 +196,7 @@ void DefineHistograms()
     // being a second variable in the measured distribution to get around that
     // For this toy, I will instead arbitrarily use twice the number of bins
     // just to get everything to work
+    // later, I can help you on the 2D unfolding if needed
 
     int nBinsTrue = 20;
     int nBinsReco = 40;

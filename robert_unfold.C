@@ -23,9 +23,17 @@ void robert_unfold()
     // in reality, the simulation only resembles real data
     // the matrix is made from simulation
     // so the data unfolded won't match the true distribution exactly
+
+    // First, load all histograms that we saved earlierin the createToyModel script
     LoadHistograms();
+
+    // This function will carry out unfolding using TUnfold
     TUnfoldUnfolding();
+
+    // Plot the results
     PlotUnfoldedResult();
+
+    // Save all results to a file
     SaveToFile();
 }// end robert_unfold()
 

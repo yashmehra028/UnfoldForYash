@@ -117,4 +117,4 @@ This means the response matrix was not created correctly.
 
 The other output is a plot of the true and reco distributions on the x and y projections of the migration matrix. As you can see below, something is missing. I didn't include a legend here, but the lines are the true and reco distributions. The projections should be little filled circles, but they are not visible on this plot. This is because the scale is way larger than in the 1D distributions, but they should be the same.
 
-![image](test_projections.png,"plot of reco and true distributions vs x and y projections of the migration matrix from Yash's histograms")
+![image](test_projections.png "plot of reco and true distributions vs x and y projections of the migration matrix from Yash's histograms")

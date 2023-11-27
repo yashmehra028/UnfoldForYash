@@ -117,4 +117,13 @@ This means the response matrix was not created correctly.
 
 The other output is a plot of the true and reco distributions on the x and y projections of the migration matrix. As you can see below, something is missing. I didn't include a legend here, but the lines are the true and reco distributions. The projections should be little filled circles, but they are not visible on this plot. This is because the scale is way larger than in the 1D distributions, but they should be the same.
 
-![image](test_projections_yash.png "plot of reco and true distributions vs x and y projections of the migration matrix from Yash's histograms")
+![image](plots/test_projections_yash.png "plot of reco and true distributions vs x and y projections of the migration matrix from Yash's histograms")
+
+# How to produce toy models for unfolding
+Create 1D histograms for the true and reconstuctructed distributions and a 2D histogram with the true and reco binning (our analysis has true on the y-axis and reco on the x-axis). TUnfold requires that the reco distributions has more bins than the true distribution. For the sake of this tutorial, I simply made reco have twice as many bins and true. 
+
+Next, create a function (or use one built-in to ROOT like Gaus()) to randomly select your variable from. In our case, we are unfolding invariant mass, so I will use a simple gaussian centered at the z boson mass (91 GeV). I arbintrarily chose the width of that peak to be 15 GeV. Now, to get a simple reconstructed distribution, we need to assum some amount of smearing on the original true masses. This is due to the finite resolution of the detector. So I created another random number to represent the amount of smearing by selecting from another gaussian centered at 0 with a width of 2. The width was chosen simply to be small enough that we wouldn't see very large bin migrations. All of these options can be further refined and tested to get more realistic distributions. To take realism even further, one would need to consider the effect of different event weights used in true and reco events, and the selection efficiency. We will get to that in the future.
+
+Below are my reco and true distributions:
+![image](plots/reco_robert.png "plot of reco distribution")
+![image](plots/true_robert.png "plot of true distribution")

@@ -120,7 +120,7 @@ The other output is a plot of the true and reco distributions on the x and y pro
 ![image](plots/test_projections_yash.png "plot of reco and true distributions vs x and y projections of the migration matrix from Yash's histograms")
 
 # How to produce toy models for unfolding
-Create 1D histograms for the true and reconstuctructed distributions and a 2D histogram with the true and reco binning (our analysis has true on the y-axis and reco on the x-axis). TUnfold requires that the reco distributions has more bins than the true distribution. For the sake of this tutorial, I simply made reco have twice as many bins and true. 
+Create 1D histograms for the true and reconstuctructed distributions and a 2D histogram with the true and reco binning (our analysis has true on the y-axis and reco on the x-axis). TUnfold requires that the reco distributions has more bins than the true distribution. For the sake of this tutorial, I simply made reco have twice as many bins as true. In our analysis, we are instead using a second variable to the reco distribution, but we will get into that some other time. For now, this will be sufficient. 
 
 Next, create a function (or use one built-in to ROOT like Gaus()) to randomly select your variable from. In our case, we are unfolding invariant mass, so I will use a simple gaussian centered at the z boson mass (91 GeV). I arbintrarily chose the width of that peak to be 15 GeV. Now, to get a simple reconstructed distribution, we need to assum some amount of smearing on the original true masses. This is due to the finite resolution of the detector. So I created another random number to represent the amount of smearing by selecting from another gaussian centered at 0 with a width of 2. The width was chosen simply to be small enough that we wouldn't see very large bin migrations. All of these options can be further refined and tested to get more realistic distributions. To take realism even further, one would need to consider the effect of different event weights used in true and reco events, and the selection efficiency. We will get to that in the future.
 
@@ -133,6 +133,7 @@ The migration matrix needs to be filled event-by-event with the same variables a
 ![image](plots/migrationMatrix_robert.png "2D histogram of the migration matrix")
 ![image](plots/responseMatrix_robert.png "2D histogram of the response matrix")
 
+Note that for the response matrix, I have rebinned the x-axis to make it square. This just makes it a little nicer to interpret. 
 Finally, let's run CheckResullts.sh on the output:
 ```
 ./CheckResults.sh robert_unfolding.root
@@ -167,3 +168,5 @@ Import the histograms created from the toy models, set all necessary options, an
 
 Here is the unfolding closure test carried out on the toy model shown here:
 ![image](plots/unfolded_closure.png "unfolding closure test with ratio plots underneath")
+
+You can see in the ratio plot that the reco distribution varies from the true one by up to around 4%, but the unfolded distribution appears to exactly match the true distribution as expected.

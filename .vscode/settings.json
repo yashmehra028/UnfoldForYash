@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "checkResults.C": "cpp",
+        "yash_unfold.C": "cpp",
+        "robert_unfold.C": "cpp",
+        "createToyModel.C": "cpp"
+    }
+}

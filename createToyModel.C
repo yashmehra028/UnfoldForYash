@@ -1,9 +1,13 @@
 
 // Global histograms
-TH1D*_hTrue;
-TH1D*_hReco;
-TH2D*_hMatrix;
-TH2D*_hResponse;
+TH1D* _hTrue;
+TH1D* _hReco;
+TH2D* _hMatrix;
+TH2D* _hResponse;
+TH1D* _hData;
+TH1D* _hback;
+TH1D* _hdata_with_bgd;
+
 
 // vector of canvases to hold all plots for later saving
 vector<TCanvas*> _canvas;
@@ -12,7 +16,7 @@ vector<TString> _plot_names;
 
 // Global functinos
 void DefineHistograms();
-void MakeModel(int nEntries);
+void MakeModel(int nEntries, int nBgd);
 void MakeNormalizedResponseMatrix();
 void PlotHistograms();
 void MakePlots();
@@ -20,6 +24,7 @@ void Plot1D(TH1D*hist,TString save_tag);
 void Plot2D(TH2D*hist,TString save_tag);
 void SaveToFile();
 void SavePlots();
+
 
 void createToyModel()
 {
@@ -39,7 +44,7 @@ void createToyModel()
     DefineHistograms();
 
     // Create the toy model with 1000000 events
-    MakeModel(1e6);
+    MakeModel(1e6, 1e4);
     
     // Create the normalized response matrix from the migration matrix
     // This will scale each bin such that the sum of all events for each reco bin
@@ -66,6 +71,9 @@ void MakePlots()
 {
    Plot1D(_hTrue,"true"); 
    Plot1D(_hReco,"reco"); 
+   Plot1D(_hData,"data");
+   Plot1D(_hback,"bgd");
+   Plot1D(_hdata_with_bgd,"data_bgd");
    Plot2D(_hMatrix,"migrationMatrix"); 
    Plot2D(_hResponse,"responseMatrix"); 
 }// end MakePlots()
@@ -135,10 +143,10 @@ void MakeNormalizedResponseMatrix()
     // I am making the response matrix simply to look at it
     // it is not needed when using TUnfold
     // So I am going to rebin it to make it nicer to look at
-    _hResponse->RebinX(2);
+    //_hResponse->RebinX(2);
 }// end MakeNormalizedResponseMatrix
 
-void MakeModel(int nEntries)
+void MakeModel(int nEntries, int nBgd)
 {
     // Some explanation:
     // ********************************************************************
@@ -155,6 +163,9 @@ void MakeModel(int nEntries)
     double true_mass;
     double reco_mass;
     double smear;
+    double data_mass;
+    double smear_data;
+    double bgd_mass;
 
     // values for Gaussian being used for true distribution
     // 91 GeV is the z boson peak
@@ -168,8 +179,15 @@ void MakeModel(int nEntries)
     double smearing_mean = 0;
     double smearing_std = 2;
 
+    // setting seed for "data" distribution
+    int seed_data = 5;
+    int seed_background = 10;
+
     TRandom3 rand;
-    for(int iEntry=0;iEntry<nEntries;iEntry++){
+    TRandom3 rand2(seed_data);
+    TRandom3 rand3(seed_background);
+
+    for (int iEntry=0;iEntry<nEntries;iEntry++){
 
         // randomly choose true mass with Gaussian
         true_mass = rand.Gaus(true_mean,true_std);        
@@ -177,15 +195,30 @@ void MakeModel(int nEntries)
         // randomly choose the smearing factor with Gaussian
         smear = rand.Gaus(smearing_mean,smearing_std);
 
+        // smear for data
+        smear_data = rand2.Gaus(smearing_mean,smearing_std);
+
         // the reco mass is the true mass added to the smearing factor
         // which can be positive or negative
         reco_mass = true_mass+smear;
-
+        data_mass = true_mass+smear_data;
         // Fill all histograms from the same mass variables
         _hTrue->Fill(true_mass);
         _hReco->Fill(reco_mass);
+        _hData->Fill(data_mass);
         _hMatrix->Fill(reco_mass,true_mass);
     }// end loop over entries
+
+    for (int ibgd=0; ibgd<nBgd; ibgd++){
+
+        // background at same mean and std as the true mass
+        bgd_mass = rand3.Gaus(true_mean, true_std);
+        _hback->Fill(bgd_mass);
+    }
+
+    _hdata_with_bgd->Add(_hData,_hback);
+
+
 }// end MakeModel()
 
 void DefineHistograms()
@@ -202,27 +235,50 @@ void DefineHistograms()
     int nBinsReco = 40;
     int lowMass = 60;
     int highMass = 120;
+
     _hTrue = new TH1D("true","",nBinsTrue,lowMass,highMass);
     _hReco = new TH1D("reco","",nBinsReco,lowMass,highMass);
     _hMatrix = new TH2D("migration_matrix","",nBinsReco,lowMass,highMass,nBinsTrue,lowMass,highMass);
+    _hData = new TH1D("data","",nBinsReco,lowMass,highMass);
+    _hback = new TH1D("background","",nBinsReco,lowMass,highMass);
+    _hdata_with_bgd = new TH1D("data_bgd","",nBinsReco,lowMass,highMass);
 
     _hTrue->SetMinimum(0);
     _hTrue->SetLineColor(kRed);
     _hTrue->SetMarkerColor(kRed);
     _hTrue->SetMarkerStyle(20);
+
     _hReco->SetMinimum(0);
     _hReco->SetLineColor(kBlue);
     _hReco->SetMarkerColor(kBlue);
     _hReco->SetMarkerStyle(20);
+
+    _hData->SetMinimum(0);
+    _hData->SetLineColor(kGreen);
+    _hData->SetMarkerColor(kGreen);
+    _hData->SetMarkerStyle(20);
+
+    _hback->SetMinimum(0);
+    _hback->SetLineColor(kOrange);
+    _hback->SetMarkerColor(kOrange);
+    _hback->SetMarkerStyle(20);
+
+    _hdata_with_bgd->SetMinimum(0);
+    _hdata_with_bgd->SetLineColor(kBlack);
+    _hdata_with_bgd->SetMarkerColor(kBlack);
+    _hdata_with_bgd->SetMarkerStyle(20);
 }
 
 void SaveToFile()
 {
-    TFile*save_file = new TFile("robert_unfolding.root","recreate");
+    TFile*save_file = new TFile("yash_unfolding.root","recreate");
     _hTrue->Write();
     _hReco->Write();
+    _hData->Write();
     _hMatrix->Write();
     _hResponse->Write();
+    _hback->Write();
+    _hdata_with_bgd->Write();
     save_file->Close();
 }// end SaveToFile()
 
@@ -230,6 +286,6 @@ void SavePlots()
 {
     int nPlots = _canvas.size();
     for(int i=0;i<nPlots;i++){
-        _canvas.at(i)->SaveAs("plots/"+_plot_names.at(i));
+        _canvas.at(i)->SaveAs("plots_mod/"+_plot_names.at(i));
     }// end loop over plots
 }// end SavePlots()

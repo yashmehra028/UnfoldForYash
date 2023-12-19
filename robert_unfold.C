@@ -1,10 +1,15 @@
 
-TString file_load_name = "robert_unfolding.root";
+//TString file_load_name = "robert_unfolding.root";
+TString file_load_name = "yash_unfolding.root";
 TH1D*_hTrue;
 TH1D*_hReco;
 TH1D*_hBack;
 TH2D*_hMatrix;
 TH1F*_hUnfolded;
+TH1F*_hUnfolded_data;
+// new plots
+TH1D*_hData;
+TH1D*_hDataBgd;
 
 void LoadHistograms();
 void TUnfoldUnfolding();
@@ -43,6 +48,10 @@ void LoadHistograms()
     _hTrue = (TH1D*)loadFile->Get("true");
     _hReco = (TH1D*)loadFile->Get("reco");
     _hMatrix = (TH2D*)loadFile->Get("migration_matrix");
+	_hData = (TH1D*)loadFile->Get("data");
+	_hDataBgd = (TH1D*)loadFile->Get("data_bgd");
+	_hBack = (TH1D*)loadFile->Get("bgd");
+	
 }// end LoadHistograms()
 
 void TUnfoldUnfolding()
@@ -88,7 +97,12 @@ void TUnfoldUnfolding()
     //  Constructor for TUnfoldDensity  //
     //////////////////////////////////////
     TUnfoldDensity unfold(_hMatrix,outputMap,regMode,constraintMode,densityFlags);
+
+	TUnfoldDensity unfold_data(_hMatrix,outputMap,regMode,constraintMode,densityFlags);
+
     unfold.SetInput(_hReco);//the measured distribution
+	unfold_data.SetInput(_hData); //unfold2 for data
+
     double backScale = 1.0;
     double backScaleError = 0.0;//scale error for background
 
@@ -123,18 +137,29 @@ void TUnfoldUnfolding()
         // tau set to zero means no regularization
         // when regularization is used, tau has to be determined
         double tau = 0;
+		
+		// for reconstructed in MC
         unfold.DoUnfold(tau,_hReco);
+
+		// for data which has a different smear than of reconstructed in MC
+		unfold_data.DoUnfold(tau,_hData);
+
+		
+
     }// end regularization==false
 
     //Create unfolded histogram
     TH1*hUnfolded = unfold.GetOutput("hUnfolded");
+	TH1*hUnfolded_data = unfold_data.GetOutput("hUnfolded_data");
 
     // Create covariance matrix
     // the diagonals contain the square of the error for each bin
     TH2*_hEmatTotal=unfold.GetEmatrixTotal("hEmatrixTotal");
+	TH2*_hEmatTotal_data=unfold_data.GetEmatrixTotal("hEmatrixTotal_data");
 
     //Create unfolding histogram with errors
     TH1F*hUnfoldedE = (TH1F*)hUnfolded->Clone("hUnfoldedTUnfold");
+	TH1F*hUnfoldedE_data = (TH1F*)hUnfolded_data->Clone("hUnfoldedTUnfold_data");
 
     //loop over unfolded histogram bins and assign errors to each one
     // these come from the covariance matrix defined by TUnfold
@@ -142,9 +167,13 @@ void TUnfoldUnfolding()
     for(int i=0;i<=nBinsTrue;i++){
         double binError = TMath::Sqrt(_hEmatTotal->GetBinContent(i+1,i+1));
         hUnfoldedE->SetBinError(i+1,binError);
+		
+		double binError_data = TMath::Sqrt(_hEmatTotal_data->GetBinContent(i+1,i+1));
+		hUnfoldedE_data->SetBinError(i+1,binError_data);
     }
 
     _hUnfolded = hUnfoldedE;
+	_hUnfolded_data = hUnfoldedE_data;	
 }// end TUnfoldUnfolding()
 
 void PlotUnfoldedResult()
@@ -163,26 +192,26 @@ void PlotUnfoldedResult()
     double upperBound = 1.0+ratioRange;
     double lowerBound = 1.0-ratioRange;
 
-    TH1D*hReco = (TH1D*)_hReco->Clone();
-    hReco->Rebin(2);
+    TH1D*hData = (TH1D*)_hData->Clone();
+    hData->Rebin(2);
 
-    TH1D*hRatioReco = (TH1D*)hReco->Clone("reco ratio");
-    hRatioReco->Divide(_hTrue);
-    hRatioReco->SetMarkerStyle(25);
-    hRatioReco->SetMarkerColor(kBlue);
-    hRatioReco->SetLineColor(kBlue);
-    hRatioReco->SetMinimum(lowerBound);
-    hRatioReco->SetMaximum(upperBound);
-    hRatioReco->SetTitle("");
-    hRatioReco->GetYaxis()->SetLabelSize(0.06);
-    hRatioReco->GetYaxis()->SetTitleSize(0.09);
-    hRatioReco->GetYaxis()->SetTitleOffset(0.3);
-    hRatioReco->GetYaxis()->SetTitle("reco/true");
-    hRatioReco->GetXaxis()->SetLabelSize(0.1);
-    hRatioReco->GetXaxis()->SetTitleSize(0.12);
-    hRatioReco->GetXaxis()->SetTitleOffset(0.8);
+    TH1D*hRatioData = (TH1D*)hData->Clone("Data ratio");
+    hRatioData->Divide(_hTrue);
+    hRatioData->SetMarkerStyle(25);
+    hRatioData->SetMarkerColor(kBlue);
+    hRatioData->SetLineColor(kBlue);
+    hRatioData->SetMinimum(lowerBound);
+    hRatioData->SetMaximum(upperBound);
+    hRatioData->SetTitle("");
+    hRatioData->GetYaxis()->SetLabelSize(0.06);
+    hRatioData->GetYaxis()->SetTitleSize(0.09);
+    hRatioData->GetYaxis()->SetTitleOffset(0.3);
+    hRatioData->GetYaxis()->SetTitle("data/true");
+    hRatioData->GetXaxis()->SetLabelSize(0.1);
+    hRatioData->GetXaxis()->SetTitleSize(0.12);
+    hRatioData->GetXaxis()->SetTitleOffset(0.8);
 
-    TH1D*hRatioUnfolded = (TH1D*)_hUnfolded->Clone("unfolded ratio");
+    TH1D*hRatioUnfolded = (TH1D*)_hUnfolded_data->Clone("unfolded ratio");
     hRatioUnfolded->Divide(_hTrue);
     hRatioUnfolded->SetMarkerStyle(20);
     hRatioUnfolded->SetMarkerColor(kBlack);
@@ -201,26 +230,26 @@ void PlotUnfoldedResult()
     pad1->cd();
 
     _hTrue->SetMinimum(1e3);
-    hReco->SetMinimum(1e3);
+    hData->SetMinimum(1e3);
     _hTrue->SetFillColor(kRed+2);
     _hTrue->SetMarkerColor(kRed+2);
     _hTrue->SetLineColor(kRed+2);
-    _hUnfolded->SetMarkerStyle(20);
-    _hUnfolded->SetMarkerColor(kBlack);
+    _hUnfolded_data->SetMarkerStyle(20);
+    _hUnfolded_data->SetMarkerColor(kBlack);
     _hTrue->GetYaxis()->SetTitle("# of events");
     _hTrue->GetXaxis()->SetLabelSize(0);
     _hTrue->SetTitle("");
     _hTrue->Draw("hist");
-    _hUnfolded->Draw("pe,same");
-    hReco->SetMarkerStyle(25);
-    hReco->SetMarkerColor(kBlue);
-    hReco->Draw("pe,same");
+    _hUnfolded_data->Draw("pe,same");
+    hData->SetMarkerStyle(25);
+    hData->SetMarkerColor(kBlue);
+    hData->Draw("pe,same");
 
     TLegend*legend = new TLegend(0.7,0.9,0.9,0.7);
     legend->SetTextSize(0.04);
     legend->AddEntry(_hTrue,"true");
-    legend->AddEntry(hReco,"reco");
-    legend->AddEntry(_hUnfolded,"unfolded");
+    legend->AddEntry(hData,"data");
+    legend->AddEntry(_hUnfolded_data,"unfolded_data");
     legend->Draw("same"); 
 
     c1->cd();
@@ -232,19 +261,20 @@ void PlotUnfoldedResult()
     pad2->Draw();
     pad2->cd();
 
-    hRatioReco->Draw("pe,same");
+    hRatioData->Draw("pe,same");
     hRatioUnfolded->Draw("pe,same");
     line->Draw("same");
 
-    c1->SaveAs("plots/unfolded_closure.png");
+    c1->SaveAs("plots/unfolded_closure_data.png");
 }
 
 void SaveToFile()
 {
-    TFile*saveFile = new TFile("unfolded_output.root","recreate");
+    TFile*saveFile = new TFile("unfolded_output_2.root","recreate");
     _hTrue->Write();
     _hReco->Write();
     _hUnfolded->Write();
     _hMatrix->Write();
+	_hData->Write();
     saveFile->Close();
 }

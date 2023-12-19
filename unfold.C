@@ -16,7 +16,7 @@ void TUnfoldUnfolding();
 void PlotUnfoldedResult();
 void SaveToFile();
 
-void robert_unfold()
+void unfold()
 {
     // in this script, we are unfolding the reconstructed distribution
     // it contains the exact same masses as the migration matrix
@@ -265,7 +265,7 @@ void PlotUnfoldedResult()
     hRatioUnfolded->Draw("pe,same");
     line->Draw("same");
 
-    c1->SaveAs("plots/unfolded_closure_data.png");
+    c1->SaveAs("plots_mod/unfolded_closure_data.png");
 }
 
 void SaveToFile()
